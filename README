@@ -1,0 +1,24 @@
+Codeigniter Image helper
+========================
+
+Generate image thumbnails in views templates by:
+    image_thumb("http://i.ytimg.com/vi/the0KZLEacs/hqdefault.jpg", 90, 120)
+or
+    image_thumb("images/hqdefault.jpg", 90, 120)
+
+Parameters
+----------
+    @param string  $path Path to the image file, relative to CI webroot or an URL
+    @param integer $width Image of returned image
+    @param integer $height Height of returned image
+    @param boolean $aspect Maintain aspect ratio (default: true)
+    @param array   $htmlAttributes Array of HTML attributes.
+    @param boolean $return Wheter this method should return a value or output it. This overrides AUTO_OUTPUT. (default: true)
+
+Return
+------
+void if `$return` is false, else return `<img />`
+
+Installtion
+----------
+Place this file within helpers folder.
