@@ -44,21 +44,21 @@ if ( ! function_exists('image_thumb')) {
    * @param integer $width Image of returned image
    * @param integer $height Height of returned image
    * @param boolean $aspect Maintain aspect ratio (default: true)
-   * @param array    $htmlAttributes Array of HTML attributes.
-   * @param boolean $return Wheter this method should return a value or output it. This overrides AUTO_OUTPUT.
+   * @param array   $htmlAttributes Array of HTML attributes.
+   * @param mix     $return false for direct echo, 'path' for img path, 'tag' to return img tag. This overrides AUTO_OUTPUT.
    * @return mixed    Either string or echos the value, depends on AUTO_OUTPUT and $return.
    * @access public
    */
-	function image_thumb($path, $width, $height, $aspect = true, $htmlAttributes = array(), $return = true) {
+	function image_thumb($path, $width, $height, $aspect = true, $htmlAttributes = array(), $return = 'tag') {
 
 		$cacheFolderName = config_item('image_cacheFolderName');
     $externalSourceFolderName = config_item('image_externalSourceFolderName');
     $pathinfo = pathinfo($path);
     
     if(empty($cacheFolderName))
-      $cacheFolderName = 'cache'.DIRECTORY_SEPARATOR;
+      $cacheFolderName = 'cache/';
     else
-      $cacheFolderName .= DIRECTORY_SEPARARTOR;
+      $cacheFolderName .= '/';
 
     if (empty($externalSourceDir)) {
       $externalSourceDir = 'Resources/external/';
@@ -128,7 +128,7 @@ if ( ! function_exists('image_thumb')) {
 		}
 
     //url for img tag use
-    $cacheUrl = base_url().$pathinfo['dirname'].DIRECTORY_SEPARATOR.$cacheFolderName.$width.'x'.$height.'_'.basename($path);
+    $cacheUrl = base_url().$pathinfo['dirname']."/".$cacheFolderName.$width.'x'.$height.'_'.basename($path);
     //cache file dir, create if not existed
     $cacheDir = $sourceDir.DIRECTORY_SEPARATOR.$cacheFolderName;
     if (!is_dir($cacheDir)) {
@@ -141,7 +141,7 @@ if ( ! function_exists('image_thumb')) {
 		if (file_exists($cachePath)) {
 			$csize = getimagesize($cachePath);
 			$cached = ($csize[0] == $width && $csize[1] == $height); // image is cached
-			if (@filemtime($cachePath) < @filemtime($url)) // check if up to date
+			if (@filemtime($cachePath) < @filemtime($sourcePath)) // if source is created later then cache, cache is invalid
 				$cached = false;
 		} else {
 			$cached = false;
@@ -149,7 +149,7 @@ if ( ! function_exists('image_thumb')) {
 
     //only resize if target thumbnail smaller than source
 		if (!$cached) {
-			$resize = ($size[0] > $width || $size[1] > $height) || ($size[0] < $width || $size[1] < $height);
+			$resize = ($size[0] > $width || $size[1] > $height);
 		} else {
 			$resize = false;
 		}
@@ -159,26 +159,36 @@ if ( ! function_exists('image_thumb')) {
 			$image = call_user_func('imagecreatefrom'.$types[$size[2]], $sourcePath);
       //create a temp image obj of thumbnail size
 			if (function_exists("imagecreatetruecolor") && ($temp = imagecreatetruecolor ($width, $height))) {
+        //working with transparent background
+        $trans_colour = imagecolorallocatealpha($temp, 0, 0, 0, 127);
+        imagefill($temp, 0, 0, $trans_colour);
 				imagecopyresampled ($temp, $image, 0, 0, 0, 0, $width, $height, $size[0], $size[1]);
 			} else {
 				$temp = imagecreate ($width, $height);
+        //working with transparent background
+        $trans_colour = imagecolorallocatealpha($temp, 0, 0, 0, 127);
+        imagefill($temp, 0, 0, $trans_colour);
 				imagecopyresized ($temp, $image, 0, 0, 0, 0, $width, $height, $size[0], $size[1]);
       }
       //map the temp image to target cache file
 			call_user_func("image".$types[$size[2]], $temp, $cachePath);
 			imagedestroy ($image);
 			imagedestroy ($temp);
+
+      $htmlAttributes['height'] = $height;
+      $htmlAttributes['width'] = $width;
+
 		} elseif (!$cached) {
-			copy($url, $cachePath);
+			copy($sourcePath, $cachePath);
 		}
 
 		$htmlAttributes['src'] = $cacheUrl;
-		$htmlAttributes['height'] = $height;
-		$htmlAttributes['width'] = $width;
 
-		if ($return) {
+		if ($return=='tag') {
 		  // code...
       return img($htmlAttributes);
+    } elseif ($return=='path') {
+      return $htmlAttributes['src'];
     } else {
       echo img($htmlAttributes);
       return;

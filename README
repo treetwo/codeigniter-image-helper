@@ -13,7 +13,7 @@ Parameters
     @param integer $height Height of returned image
     @param boolean $aspect Maintain aspect ratio (default: true)
     @param array   $htmlAttributes Array of HTML attributes.
-    @param boolean $return Wheter this method should return a value or output it. This overrides AUTO_OUTPUT. (default: true)
+    @param mix     $return false for direct echo, 'path' for img path, 'tag' to return img tag. This overrides AUTO_OUTPUT.
 
 Return
 ------
